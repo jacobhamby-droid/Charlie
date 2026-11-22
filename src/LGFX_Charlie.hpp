@@ -3,7 +3,7 @@
 
 class LGFX_Charlie : public lgfx::LGFX_Device {
   lgfx::Panel_CO5300 _panel_instance;
-  lgfx::Bus_QSPI     _bus_instance;
+  lgfx::Bus_SPI      _bus_instance;
   lgfx::Touch_CST816S _touch_instance;
 
 public:
@@ -11,6 +11,7 @@ public:
     {
       auto cfg = _bus_instance.config();
       cfg.freq_write = 40000000;
+      cfg.spi_host   = SPI2_HOST;
       cfg.pin_sclk   = 38;
       cfg.pin_mosi   = -1;
       cfg.pin_miso   = -1;
@@ -18,7 +19,7 @@ public:
       cfg.spi_mode   = 0;
       cfg.spi_3wire  = false;
       cfg.use_lock   = true;
-      cfg.dma_channel = 1;
+      cfg.dma_channel = SPI_DMA_CH_AUTO;
       cfg.pin_d0 = 4;
       cfg.pin_d1 = 5;
       cfg.pin_d2 = 6;
