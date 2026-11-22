@@ -34,18 +34,18 @@ static void wakeWaveshare175Display() {
 
   // 2. Pulse TCA9554 I/O expander (0x20) LCD_RST & TP_RST pins HIGH
   Wire.beginTransmission(0x20);
-  Wire.write(0x03); // Configuration register: all outputs
+  Wire.write(0x03);
   Wire.write(0x00);
   Wire.endTransmission();
 
   Wire.beginTransmission(0x20);
-  Wire.write(0x01); // Output port register: pull resets LOW
+  Wire.write(0x01);
   Wire.write(0x00);
   Wire.endTransmission();
   delay(50);
 
   Wire.beginTransmission(0x20);
-  Wire.write(0x01); // Output port register: release resets HIGH
+  Wire.write(0x01);
   Wire.write(0xFF);
   Wire.endTransmission();
   delay(120);
@@ -60,15 +60,6 @@ void setup() {
   lcd.init();
   lcd.setRotation(0);
   lcd.setBrightness(255);
-
-  // Explicit CO5300 AMOLED wake-up & max brightness
-  lcd.startWrite();
-  lcd.writeCommand(0x11);
-  delay(120);
-  lcd.writeCommand(0x29);
-  lcd.writeCommand(0x51);
-  lcd.writeData(0xFF);
-  lcd.endWrite();
 
   personalityInit();
   eyesInit(lcd);
