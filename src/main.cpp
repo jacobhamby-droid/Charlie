@@ -17,15 +17,11 @@ LGFX_Charlie lcd;
 XPowersPMU pmu;
 static uint32_t lastMs = 0;
 
-void setup() {
-  Serial.begin(115200);
-  delay(300);
-  Serial.println("Charlie booting...");
-
-  // Power up ALL display & touch rails via onboard AXP2101 PMU
+static void wakeWaveshare175Display() {
   Wire.begin(15, 14);
+
+  // 1. Power up display & touch rails via AXP2101 PMU
   if (pmu.begin(Wire, AXP2101_SLAVE_ADDRESS, 15, 14)) {
-    Serial.println("AXP2101 found! Enabling display power...");
     pmu.setALDO1Voltage(3300); pmu.enableALDO1();
     pmu.setALDO2Voltage(3300); pmu.enableALDO2();
     pmu.setALDO3Voltage(3300); pmu.enableALDO3();
@@ -33,22 +29,45 @@ void setup() {
     pmu.setBLDO1Voltage(3300); pmu.enableBLDO1();
     pmu.setBLDO2Voltage(3300); pmu.enableBLDO2();
     pmu.setDLDO1Voltage(3300); pmu.enableDLDO1();
-    delay(100);
-  } else {
-    Serial.println("AXP2101 not detected on 15/14");
+    delay(50);
   }
+
+  // 2. Pulse TCA9554 I/O expander (0x20) LCD_RST & TP_RST pins HIGH
+  Wire.beginTransmission(0x20);
+  Wire.write(0x03); // Configuration register: all outputs
+  Wire.write(0x00);
+  Wire.endTransmission();
+
+  Wire.beginTransmission(0x20);
+  Wire.write(0x01); // Output port register: pull resets LOW
+  Wire.write(0x00);
+  Wire.endTransmission();
+  delay(50);
+
+  Wire.beginTransmission(0x20);
+  Wire.write(0x01); // Output port register: release resets HIGH
+  Wire.write(0xFF);
+  Wire.endTransmission();
+  delay(120);
+}
+
+void setup() {
+  Serial.begin(115200);
+  delay(200);
+
+  wakeWaveshare175Display();
 
   lcd.init();
   lcd.setRotation(0);
   lcd.setBrightness(255);
 
-  // Send explicit CO5300 AMOLED wake-up & brightness commands
+  // Explicit CO5300 AMOLED wake-up & max brightness
   lcd.startWrite();
-  lcd.writeCommand(0x11); // Sleep Out
+  lcd.writeCommand(0x11);
   delay(120);
-  lcd.writeCommand(0x29); // Display On
-  lcd.writeCommand(0x51); // Set Display Brightness
-  lcd.writeData(0xFF);    // Max brightness
+  lcd.writeCommand(0x29);
+  lcd.writeCommand(0x51);
+  lcd.writeData(0xFF);
   lcd.endWrite();
 
   personalityInit();
@@ -60,7 +79,6 @@ void setup() {
 
   eyesSetFromMood();
   lastMs = millis();
-  Serial.println("Charlie ready!");
 }
 
 void loop() {
