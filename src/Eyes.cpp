@@ -1,6 +1,9 @@
 #include "Eyes.hpp"
 #include <math.h>
 
+EyeState gLeft;
+EyeState gRight;
+
 static LGFX_Charlie* lcd = nullptr;
 static LGFX_Sprite canvas;
 static float breath = 0.0f;
