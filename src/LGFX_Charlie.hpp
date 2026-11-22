@@ -13,17 +13,14 @@ public:
       cfg.freq_write = 40000000;
       cfg.spi_host   = SPI2_HOST;
       cfg.pin_sclk   = 38;
-      cfg.pin_mosi   = -1;
-      cfg.pin_miso   = -1;
-      cfg.pin_dc     = -1;
+      cfg.pin_io0    = 4;
+      cfg.pin_io1    = 5;
+      cfg.pin_io2    = 6;
+      cfg.pin_io3    = 7;
       cfg.spi_mode   = 0;
-      cfg.spi_3wire  = false;
+      cfg.spi_3wire  = true;
       cfg.use_lock   = true;
       cfg.dma_channel = SPI_DMA_CH_AUTO;
-      cfg.pin_d0 = 4;
-      cfg.pin_d1 = 5;
-      cfg.pin_d2 = 6;
-      cfg.pin_d3 = 7;
       _bus_instance.config(cfg);
       _panel_instance.setBus(&_bus_instance);
     }
