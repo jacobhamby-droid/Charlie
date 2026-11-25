@@ -7,10 +7,10 @@
 LGFX_Charlie lcd;
 XPowersPMU pmu;
 
-// Turn on the display power and reset it
 void wakeDisplay() {
   Wire.begin(15, 14);
 
+  // Power the display rails
   if (pmu.begin(Wire, AXP2101_SLAVE_ADDRESS, 15, 14)) {
     pmu.setALDO1Voltage(3300); pmu.enableALDO1();
     pmu.setALDO2Voltage(3300); pmu.enableALDO2();
@@ -19,10 +19,10 @@ void wakeDisplay() {
     pmu.setBLDO1Voltage(3300); pmu.enableBLDO1();
     pmu.setBLDO2Voltage(3300); pmu.enableBLDO2();
     pmu.setDLDO1Voltage(3300); pmu.enableDLDO1();
-    delay(30);
+    delay(50);
   }
 
-  // Reset pins for the screen
+  // Hardware reset of the panel
   pinMode(39, OUTPUT);
   pinMode(40, OUTPUT);
   digitalWrite(39, LOW);
@@ -35,29 +35,29 @@ void wakeDisplay() {
 
 void setup() {
   Serial.begin(115200);
-  delay(300);
+  delay(500);
 
   wakeDisplay();
-
   lcd.init();
-  lcd.setBrightness(180);
 
   // Black background
-  lcd.fillScreen(0x0000);  // black
+  lcd.fillScreen(RGB565_BLACK);
 
-  // Two simple white eyes
+  // Two simple white eyes with black pupils
   // Left eye
-  lcd.fillCircle(160, 233, 60, 0xFFFF);  // white circle
-  lcd.fillCircle(160, 233, 25, 0x0000);  // black pupil
+  lcd.fillCircle(155, 233, 55, RGB565_WHITE);
+  lcd.fillCircle(155, 233, 22, RGB565_BLACK);
 
   // Right eye
-  lcd.fillCircle(306, 233, 60, 0xFFFF);  // white circle
-  lcd.fillCircle(306, 233, 25, 0x0000);  // black pupil
+  lcd.fillCircle(311, 233, 55, RGB565_WHITE);
+  lcd.fillCircle(311, 233, 22, RGB565_BLACK);
 
-  Serial.println("Two eyes drawn!");
+  // IMPORTANT: push the drawing to the real screen
+  lcd.flush();
+
+  Serial.println("Two eyes should be visible now");
 }
 
 void loop() {
-  // Do nothing - just keep the eyes on screen
   delay(1000);
 }
