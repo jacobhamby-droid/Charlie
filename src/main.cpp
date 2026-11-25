@@ -2,16 +2,40 @@
 #include <Wire.h>
 #define XPOWERS_CHIP_AXP2101
 #include "XPowersLib.h"
-#include "LGFX_Charlie.hpp"
+#include <Arduino_GFX_Library.h>
 
-LGFX_Charlie lcd;
+// === Pins from Waveshare ESP32-S3-Touch-AMOLED-1.75 ===
+#define LCD_CS     12
+#define LCD_SCLK   38
+#define LCD_SDIO0  4
+#define LCD_SDIO1  5
+#define LCD_SDIO2  6
+#define LCD_SDIO3  7
+#define LCD_RESET  39
+#define LCD_WIDTH  466
+#define LCD_HEIGHT 466
+
 XPowersPMU pmu;
 
-void wakeDisplay() {
-  Wire.begin(15, 14);
+Arduino_DataBus *bus = new Arduino_ESP32QSPI(
+  LCD_CS, LCD_SCLK, LCD_SDIO0, LCD_SDIO1, LCD_SDIO2, LCD_SDIO3
+);
 
-  // Power the display rails
+Arduino_CO5300 *gfx = new Arduino_CO5300(
+  bus, LCD_RESET, 0 /* rotation */,
+  LCD_WIDTH, LCD_HEIGHT,
+  6, 0, 0, 0   // official col_offset
+);
+
+void setup() {
+  Serial.begin(115200);
+  delay(500);
+  Serial.println("Starting...");
+
+  // Power up the display rails (needed on this board)
+  Wire.begin(15, 14);
   if (pmu.begin(Wire, AXP2101_SLAVE_ADDRESS, 15, 14)) {
+    Serial.println("PMU OK");
     pmu.setALDO1Voltage(3300); pmu.enableALDO1();
     pmu.setALDO2Voltage(3300); pmu.enableALDO2();
     pmu.setALDO3Voltage(3300); pmu.enableALDO3();
@@ -19,45 +43,41 @@ void wakeDisplay() {
     pmu.setBLDO1Voltage(3300); pmu.enableBLDO1();
     pmu.setBLDO2Voltage(3300); pmu.enableBLDO2();
     pmu.setDLDO1Voltage(3300); pmu.enableDLDO1();
-    delay(50);
+    delay(100);
+  } else {
+    Serial.println("PMU failed");
   }
 
-  // Hardware reset of the panel
+  // Extra hardware reset (some boards need this)
   pinMode(39, OUTPUT);
   pinMode(40, OUTPUT);
   digitalWrite(39, LOW);
   digitalWrite(40, LOW);
-  delay(20);
+  delay(50);
   digitalWrite(39, HIGH);
   digitalWrite(40, HIGH);
-  delay(50);
-}
+  delay(100);
 
-void setup() {
-  Serial.begin(115200);
-  delay(500);
+  // Init display - exactly like Waveshare example
+  if (!gfx->begin()) {
+    Serial.println("gfx->begin() FAILED");
+  } else {
+    Serial.println("gfx->begin() OK");
+  }
 
-  wakeDisplay();
-  lcd.init();
+  gfx->fillScreen(BLACK);
+  gfx->setBrightness(200);
 
-  // Black background
-  lcd.fillScreen(RGB565_BLACK);
+  // Draw two big white eyes
+  gfx->fillCircle(160, 233, 70, WHITE);
+  gfx->fillCircle(160, 233, 28, BLACK);
 
-  // Two simple white eyes with black pupils
-  // Left eye
-  lcd.fillCircle(155, 233, 55, RGB565_WHITE);
-  lcd.fillCircle(155, 233, 22, RGB565_BLACK);
+  gfx->fillCircle(306, 233, 70, WHITE);
+  gfx->fillCircle(306, 233, 28, BLACK);
 
-  // Right eye
-  lcd.fillCircle(311, 233, 55, RGB565_WHITE);
-  lcd.fillCircle(311, 233, 22, RGB565_BLACK);
-
-  // IMPORTANT: push the drawing to the real screen
-  lcd.flush();
-
-  Serial.println("Two eyes should be visible now");
+  Serial.println("Eyes drawn - done");
 }
 
 void loop() {
-  delay(1000);
+  delay(2000);
 }
